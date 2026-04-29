@@ -30,7 +30,12 @@ jobs:
         with:
           name: python-deps
           path: deps
-          
+      - name: Debug deps content
+        run: |
+          ls -la ./deps | head
+          find ./deps -maxdepth 2 -name "*.dist-info" | head
+          syft ./deps -o table || true    
+                  
   dynamic-detection:
     runs-on: ubuntu-latest
     needs: tests
