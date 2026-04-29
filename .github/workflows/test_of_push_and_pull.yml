@@ -22,21 +22,17 @@ jobs:
         with:
           python-version: '3.8'
 
-       # nur ein winziges --target=deps angehängt
-    #  - name: Install dependencies
-    #    run: |
-    #      python -m venv venv
-    #      source venv/bin/activate
-    #      pip install -r scripts/requirements.txt
-     
+       # Abgeändert
       - name: Install dependencies
-        run: python -m pip install -r scripts/requirements.txt
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r scripts/requirements.txt
       
       - uses: actions/upload-artifact@v4
         with:
           name: python-deps
-      #    path: venv
-          path: ./deps
+          path: venv
                   
   dynamic-detection:
         runs-on: ubuntu-latest
