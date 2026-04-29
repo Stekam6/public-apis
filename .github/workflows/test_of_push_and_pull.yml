@@ -24,17 +24,15 @@ jobs:
 
        # nur ein winziges --target=deps angehängt
       - name: Install dependencies
-        run: python -m pip install -r scripts/requirements.txt --target=deps
-
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r scripts/requirements.txt
+      
       - uses: actions/upload-artifact@v4
         with:
           name: python-deps
-          path: deps
-      - name: Debug deps content
-        run: |
-          ls -la ./deps | head
-          find ./deps -maxdepth 2 -name "*.dist-info" | head
-          syft ./deps -o table || true    
+          path: venv
                   
   dynamic-detection:
     runs-on: ubuntu-latest
@@ -53,7 +51,7 @@ jobs:
       - name: Install Syft
         run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
       - name: Run detector
-        run: java -jar dynamicDetector/detectionSystem-1.0-SNAPSHOT-all.jar ./deps
+        run: java -jar dynamicDetector/detectionSystem-1.0-SNAPSHOT-all.jar .
       - uses: actions/upload-artifact@v4
         with:
           name: detection-results
