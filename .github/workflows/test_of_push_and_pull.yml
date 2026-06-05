@@ -1,10 +1,11 @@
-name: "Tests of push & pull"
+name: "public-apis-Tests of push & pull"
 
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 env:
   FILENAME: README.md
@@ -22,44 +23,41 @@ jobs:
         with:
           python-version: '3.8'
 
-       # Abgeändert
+      # Abgeändert
       - name: Install dependencies
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install -r scripts/requirements.txt
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: python-deps
           path: venv
-                  
-  dynamic-detection:
-        runs-on: ubuntu-latest
-        needs: tests
-        steps:
-          - uses: actions/checkout@v4   # ← komplettes Repo, kein sparse-checkout
-      
-          - uses: actions/setup-java@v4
-            with: { distribution: 'temurin', java-version: '21' }
-      
-          - uses: actions/download-artifact@v4
-            with:
-              name: python-deps
-              path: ./deps
-      
-          - name: Install Syft
-            run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-      
-          - name: Run detector
-            run: java -jar dynamicDetector/detectionSystem-1.0-SNAPSHOT-all.jar .
-      
-          - uses: actions/upload-artifact@v4
-            with:
-              name: detection-results
-              path: |
-                dynamic-detection-results.xlsx
-                sbom-output.json
+
+  generating-sbom:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-deps
+          path: ./deps
+
+      - name: Install Syft
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM (CycloneDX JSON)
+        run: syft dir:. -o cyclonedx-json=sbom-output.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom-output.json
+          retention-days: 90
 
     # - name: Validate Markdown format
     #   run: python scripts/validate/format.py ${FILENAME}
